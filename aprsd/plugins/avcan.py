@@ -64,6 +64,7 @@ class AvcanPlugin(plugin.APRSDRegexCommandPluginBase):
         if a is not None:
             command = "weathersum"
 
+        LOG.info("AvcanPlugin: command = {}".format(command))
         searchcall = fromcall
         api_key = CONF.aprs_fi.apiKey
 
@@ -81,6 +82,7 @@ class AvcanPlugin(plugin.APRSDRegexCommandPluginBase):
         lat = aprs_data["entries"][0]["lat"]
         lon = aprs_data["entries"][0]["lng"]
 
+        LOG.info("AvcanPlugin: lat,lon = {},{}".format(lat,lon))
         try:
             av_data = plugin_utils.fetch_avcan(
                 lat,
@@ -97,14 +99,14 @@ class AvcanPlugin(plugin.APRSDRegexCommandPluginBase):
         if command == "highlights":
             if av_data["report"]["highlights"] is not None:
                 highlights = lxml.html.fromstring(av_data["report"]["highlights"]).text_content()
-                lines = textwrap.wrap(highlights, 63)
+                lines = textwrap.wrap(highlights, 67)
 
         elif command == "avsum":
             if av_data["report"]["summaries"] is not None:
                 for summary in av_data["report"]["summaries"]:
                     if summary["type"]["value"] == "avalanche-summary":
                         avsum = lxml.html.fromstring(summary["content"]).text_content()
-                        lines = textwrap.wrap(avsum, 63)
+                        lines = textwrap.wrap(avsum, 67)
                         break
 
         elif command == "snowsum":
@@ -112,7 +114,7 @@ class AvcanPlugin(plugin.APRSDRegexCommandPluginBase):
                 for summary in av_data["report"]["summaries"]:
                     if summary["type"]["value"] == "snowpack-summary":
                         snowsum = lxml.html.fromstring(summary["content"]).text_content()
-                        lines = textwrap.wrap(snowsum, 63)
+                        lines = textwrap.wrap(snowsum, 67)
                         break
 
         elif command == "weathersum":
@@ -120,7 +122,7 @@ class AvcanPlugin(plugin.APRSDRegexCommandPluginBase):
                 for summary in av_data["report"]["summaries"]:
                     if summary["type"]["value"] == "weather-summary":
                         weathersum = lxml.html.fromstring(summary["content"]).text_content()
-                        lines = textwrap.wrap(weathersum, 63)
+                        lines = textwrap.wrap(weathersum, 67)
                         break
         else:
             if av_data["report"]["dangerRatings"] is not None:

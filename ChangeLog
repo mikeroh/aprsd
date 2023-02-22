@@ -1,6 +1,7 @@
 CHANGES
 =======
 
+* Cleanup
 * Add highlights command to Avalanche Canada plugin
 * Add Avalanche Canada Plugin for today's forecast
 * Update Dockerfile
