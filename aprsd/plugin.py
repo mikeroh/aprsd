@@ -28,6 +28,7 @@ CORE_MESSAGE_PLUGINS = [
     "aprsd.plugins.time.TimePlugin",
     "aprsd.plugins.weather.USWeatherPlugin",
     "aprsd.plugins.version.VersionPlugin",
+    "aprsd.plugins.avcan.AvcanPlugin",
 ]
 
 CORE_NOTIFY_PLUGINS = [

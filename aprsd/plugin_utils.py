@@ -83,3 +83,23 @@ def fetch_openweathermap(api_key, lat, lon, units="metric", exclude=None):
     else:
         response.raise_for_status()
         return json.loads(response.text)
+
+    
+def fetch_avcan(lat, lon):
+    LOG.debug("Fetch avcan for {lat}, {lon}")
+    try:
+        url = (
+            "https://api.avalanche.ca/forecasts/en/products/point?"
+            "lat={}&long={}".format(
+                lat,
+                lon,
+            )
+        )
+        LOG.info("URL: {}".format(url))
+        response = requests.get(url)
+    except Exception as e:
+        LOG.error(e)
+        raise Exception("Failed to get avalanche forecast")
+    else:
+        response.raise_for_status()
+        return json.loads(response.text)
