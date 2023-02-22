@@ -1,6 +1,7 @@
 CHANGES
 =======
 
+* Add highlights command to Avalanche Canada plugin
 * Add Avalanche Canada Plugin for today's forecast
 * Update Dockerfile
 * Add ratelimiting for acks and other packets

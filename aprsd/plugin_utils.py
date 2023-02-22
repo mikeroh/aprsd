@@ -67,7 +67,7 @@ def fetch_openweathermap(api_key, lat, lon, units="metric", exclude=None):
         exclude = "minutely,hourly,daily,alerts"
     try:
         url = (
-            "https://api.openweathermap.org/data/2.5/onecall?"
+            "https://api.openweathermap.org/data/2.5/forecast?"
             "lat={}&lon={}&appid={}&units={}&exclude={}".format(
                 lat,
                 lon,
@@ -95,7 +95,6 @@ def fetch_avcan(lat, lon):
                 lon,
             )
         )
-        LOG.info("URL: {}".format(url))
         response = requests.get(url)
     except Exception as e:
         LOG.error(e)

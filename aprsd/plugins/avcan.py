@@ -36,9 +36,8 @@ class AvcanPlugin(plugin.APRSDRegexCommandPluginBase):
 
     def help(self):
         _help = [
-            "avcan: Send {} to get avcan danger ratings "
-            "from your location".format(self.command_regex),
-            "subcommand hl for highlights"
+            "avcan: Send {} to get danger ratings".format(self.command_regex),
+            "subcommands: highlights summary snowpack weather"
         ]
         return _help
 
@@ -48,13 +47,24 @@ class AvcanPlugin(plugin.APRSDRegexCommandPluginBase):
         message = packet.get("message_text", None)
         # ack = packet.get("msgNo", "0")
         LOG.info(f"Avcan Plugin '{message}'")
-        a = re.search(r"^.*\s+([h][l]|[h][l]\s|highlight)", message)
+        command = "danger"
+        a = re.search(r"^.*\s+([h][l]|[h][l]\s|highlights)", message)
         if a is not None:
             command = "highlights"
-        else:
-            command = "danger"
-        searchcall = fromcall
 
+        a = re.search(r"^.*\s+([a][s]|[a][s]\s|summary)", message)
+        if a is not None:
+            command = "avsum"
+
+        a = re.search(r"^.*\s+([s][s]|[s][s]\s|snowpack)", message)
+        if a is not None:
+            command = "snowsum"
+
+        a = re.search(r"^.*\s+([w][s]|[w][s]\s|weather)", message)
+        if a is not None:
+            command = "weathersum"
+
+        searchcall = fromcall
         api_key = CONF.aprs_fi.apiKey
 
         try:
@@ -80,15 +90,38 @@ class AvcanPlugin(plugin.APRSDRegexCommandPluginBase):
             LOG.error(f"Couldn't fetch avcan api '{ex}'")
             return "Unable to get avalanche forecast"
 
-        LOG.info("AvcanPlugin: av_data = {}".format(av_data))
-
         lines = []
+        if av_data["report"]["highlights"] is None:
+            return "No forecast for {},{}".format(lat, lon)
+
         if command == "highlights":
             if av_data["report"]["highlights"] is not None:
                 highlights = lxml.html.fromstring(av_data["report"]["highlights"]).text_content()
-                lines = textwrap.wrap(highlights, 60)
-            else:
-                return "No forecast for {},{}".format(lat, lon)
+                lines = textwrap.wrap(highlights, 63)
+
+        elif command == "avsum":
+            if av_data["report"]["summaries"] is not None:
+                for summary in av_data["report"]["summaries"]:
+                    if summary["type"]["value"] == "avalanche-summary":
+                        avsum = lxml.html.fromstring(summary["content"]).text_content()
+                        lines = textwrap.wrap(avsum, 63)
+                        break
+
+        elif command == "snowsum":
+            if av_data["report"]["summaries"] is not None:
+                for summary in av_data["report"]["summaries"]:
+                    if summary["type"]["value"] == "snowpack-summary":
+                        snowsum = lxml.html.fromstring(summary["content"]).text_content()
+                        lines = textwrap.wrap(snowsum, 63)
+                        break
+
+        elif command == "weathersum":
+            if av_data["report"]["summaries"] is not None:
+                for summary in av_data["report"]["summaries"]:
+                    if summary["type"]["value"] == "weather-summary":
+                        weathersum = lxml.html.fromstring(summary["content"]).text_content()
+                        lines = textwrap.wrap(weathersum, 63)
+                        break
         else:
             if av_data["report"]["dangerRatings"] is not None:
                 for day in av_data["report"]["dangerRatings"]:
@@ -98,8 +131,5 @@ class AvcanPlugin(plugin.APRSDRegexCommandPluginBase):
                         day["ratings"]["tln"]["rating"]["value"],
                         day["ratings"]["btl"]["rating"]["value"],
                     ))
-
-            else:
-                return "No forecast for {},{}".format(lat, lon)
 
         return lines
