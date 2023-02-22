@@ -1,9 +1,14 @@
 CHANGES
 =======
 
+* Add Avalanche Canada Plugin for today's forecast
+* Update Dockerfile
+* Add ratelimiting for acks and other packets
+
 v3.0.2
 ------
 
+* Update Changelog for 3.0.2
 * Import RejectPacket
 
 v3.0.1

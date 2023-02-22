@@ -1,9 +1,9 @@
-import json
+import lxml.html
+import textwrap
 import logging
 import re
 
 from oslo_config import cfg
-#import requests
 
 from aprsd import plugin, plugin_utils
 from aprsd.utils import trace
@@ -14,7 +14,7 @@ LOG = logging.getLogger("APRSD")
 
 
 class AvcanPlugin(plugin.APRSDRegexCommandPluginBase):
-    """Avalanceh Canada Forecast Command
+    """Avalanche Canada Forecast Command
 
     This provides avalanche forecast data  near the caller or callsign.
 
@@ -36,25 +36,24 @@ class AvcanPlugin(plugin.APRSDRegexCommandPluginBase):
 
     def help(self):
         _help = [
-            "avcan: Send {} to get weather "
+            "avcan: Send {} to get avcan danger ratings "
             "from your location".format(self.command_regex),
-            "avcan: Send {} <callsign> to get "
-            "weather from <callsign>".format(self.command_regex),
+            "subcommand hl for highlights"
         ]
         return _help
 
     @trace.trace
     def process(self, packet):
-        fromcall = packet.get("from")
+        fromcall = packet.from_call
         message = packet.get("message_text", None)
         # ack = packet.get("msgNo", "0")
         LOG.info(f"Avcan Plugin '{message}'")
-        a = re.search(r"^.*\s+(.*)", message)
+        a = re.search(r"^.*\s+([h][l]|[h][l]\s|highlight)", message)
         if a is not None:
-            searchcall = a.group(1)
-            searchcall = searchcall.upper()
+            command = "highlights"
         else:
-            searchcall = fromcall
+            command = "danger"
+        searchcall = fromcall
 
         api_key = CONF.aprs_fi.apiKey
 
@@ -83,26 +82,24 @@ class AvcanPlugin(plugin.APRSDRegexCommandPluginBase):
 
         LOG.info("AvcanPlugin: av_data = {}".format(av_data))
 
-        if "id" in av_data:
-            today = "{} alp:{}, tl:{}, btl:{}".format(
-                av_data["report"]["dangerRatings"][0]["date"]["display"],
-                av_data["report"]["dangerRatings"][0]["ratings"]["alp"]["rating"]["value"],
-                av_data["report"]["dangerRatings"][0]["ratings"]["tln"]["rating"]["value"],
-                av_data["report"]["dangerRatings"][0]["ratings"]["btl"]["rating"]["value"],
-            )
+        lines = []
+        if command == "highlights":
+            if av_data["report"]["highlights"] is not None:
+                highlights = lxml.html.fromstring(av_data["report"]["highlights"]).text_content()
+                lines = textwrap.wrap(highlights, 60)
+            else:
+                return "No forecast for {},{}".format(lat, lon)
         else:
-            return "No forecast for {},{}".format(lat,lon)
+            if av_data["report"]["dangerRatings"] is not None:
+                for day in av_data["report"]["dangerRatings"]:
+                    lines.append("{}: alp:{}, tl:{}, btl:{}".format(
+                        day["date"]["display"][0:3],
+                        day["ratings"]["alp"]["rating"]["value"],
+                        day["ratings"]["tln"]["rating"]["value"],
+                        day["ratings"]["btl"]["rating"]["value"],
+                    ))
 
-        # # LOG.debug(wx_data["current"])
-        # # LOG.debug(wx_data["daily"])
-        # reply = "{} {:.1f}{}/{:.1f}{} Wind {} {}%".format(
-        #     wx_data["current"]["weather"][0]["description"],
-        #     wx_data["current"]["temp"],
-        #     degree,
-        #     wx_data["current"]["dew_point"],
-        #     degree,
-        #     wind,
-        #     wx_data["current"]["humidity"],
-        # )
+            else:
+                return "No forecast for {},{}".format(lat, lon)
 
-        return today
+        return lines

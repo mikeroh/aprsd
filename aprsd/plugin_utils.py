@@ -84,7 +84,7 @@ def fetch_openweathermap(api_key, lat, lon, units="metric", exclude=None):
         response.raise_for_status()
         return json.loads(response.text)
 
-    
+
 def fetch_avcan(lat, lon):
     LOG.debug("Fetch avcan for {lat}, {lon}")
     try:
