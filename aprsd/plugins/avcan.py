@@ -64,7 +64,6 @@ class AvcanPlugin(plugin.APRSDRegexCommandPluginBase):
         if a is not None:
             command = "weathersum"
 
-        LOG.info("AvcanPlugin: command = {}".format(command))
         searchcall = fromcall
         api_key = CONF.aprs_fi.apiKey
 
@@ -93,7 +92,7 @@ class AvcanPlugin(plugin.APRSDRegexCommandPluginBase):
             return "Unable to get avalanche forecast"
 
         lines = []
-        if av_data["report"]["highlights"] is None:
+        if av_data["report"]["dangerRatings"] is None:
             return "No forecast for {},{}".format(lat, lon)
 
         if command == "highlights":
